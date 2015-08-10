@@ -13,17 +13,20 @@ public class ServerRunnable implements Runnable {
         try {
             while(!Thread.interrupted())
             {
-                Thread.sleep(1000);
+//                Thread.sleep(1000);
                 OutputStream outputStream = SerialComm.getOutputStream();
-                byte[] data = new byte[]{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
+                byte[] data = "f455fc\n".getBytes();
+
                 outputStream.write(data,0,data.length);
                 System.out.println("Send");
             }
 
-        } catch (IOException e) {
-            System.out.println("Error:Can't read or write to port");
-        } catch (InterruptedException e) {
-            System.out.println("Error:Thread interrupted");
         }
+        catch (IOException e) {
+            System.out.println("Error:Can't read or write to port");
+        }
+//        catch (InterruptedException e) {
+//            System.out.println("Error:Thread interrupted");
+//        }
     }
 }
