@@ -1,72 +1,94 @@
 package com.mobilejohnny.iotclient;
-import com.github.nkzawa.emitter.Emitter;
-import com.github.nkzawa.socketio.client.Ack;
-import com.github.nkzawa.socketio.client.IO;
-import com.github.nkzawa.socketio.client.Socket;
-import com.mobilejohnny.SerialComm;
-import gnu.io.CommPort;
+
+import io.socket.IOAcknowledge;
+import io.socket.IOCallback;
+import io.socket.SocketIO;
+import io.socket.SocketIOException;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.URISyntaxException;
+import java.net.MalformedURLException;
 
 
 public class Main {
 
     private static final String APP_KEY = "55c8c6339477ebf5246956dc";
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws MalformedURLException {
         System.out.println("Starting...");
         boolean result = SerialComm.connect("/dev/ttyUSB0");
 
         if(true)
         {
-            try {
-                final Socket socket = IO.socket("https://sock.yunba.io");
-
-                socket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
+                final SocketIO socketIO = new SocketIO();
+                socketIO.connect("http://sock.yunba.io:3000", new IOCallback() {
                     @Override
-                    public void call(Object... args) {
-//                        System.out.println("SocketIO connected");
+                    public void onDisconnect() {
+
                     }
-                }).on("socketconnectack", new Emitter.Listener() {
+
                     @Override
-                    public void call(Object... args) {
+                    public void onConnect() {
+
+                    }
+
+                    @Override
+                    public void onMessage(String s, IOAcknowledge ioAcknowledge) {
+
+                    }
+
+                    @Override
+                    public void onMessage(JSONObject jsonObject, IOAcknowledge ioAcknowledge) {
+
+                    }
+
+                    @Override
+                    public void on(String event, IOAcknowledge ioAcknowledge, Object... args) {
                         try {
-                            JSONObject jsonObject = (JSONObject) args[0];
+                            if(event.equals("socketconnectack"))
+                            {
+                                JSONObject jsonObject = new JSONObject();
 
-                            System.out.println(jsonObject.getString("msg"));
+                                    jsonObject.put("appkey",APP_KEY);
 
-                            socket.emit("connect", "{'appkey':'"+APP_KEY+"'}");
+
+                                socketIO.emit("auth",jsonObject);
+                            }
+                            else if(event.equals("authack"))
+                            {
+                                JSONObject jsonObject = (JSONObject)args[0];
+                                String sessionid = jsonObject.getString("sessionid");
+                                System.out.println(sessionid);
+                                socketIO.disconnect();
+                            }
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
-
                     }
-                }).on("connack", new Emitter.Listener() {
-                    @Override
-                    public void call(Object... args) {
-                        try {
-                            JSONObject jsonObject = (JSONObject) args[0];
 
-                            System.out.println(jsonObject.getBoolean("success"));
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
+                    @Override
+                    public void onError(SocketIOException e) {
+
                     }
                 });
 
-                socket.connect();
 
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
-            }
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Thread.sleep(5000);
+                            System.exit(0);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }).start();
 
 //            System.out.println( "Serial port connected");
 
 //            new Thread(new ServerRunnable()).start();
+
         }
 
     }
