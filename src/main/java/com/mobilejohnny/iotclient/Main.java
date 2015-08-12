@@ -34,12 +34,16 @@ public class Main {
 
                     @Override
                     public void onMessage(String s, IOAcknowledge ioAcknowledge) {
-
+                        System.out.println(s);
                     }
 
                     @Override
                     public void onMessage(JSONObject jsonObject, IOAcknowledge ioAcknowledge) {
-
+                        try {
+                            System.out.println(jsonObject.getString("msg"));
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                     }
 
                     @Override
@@ -48,18 +52,31 @@ public class Main {
                             if(event.equals("socketconnectack"))
                             {
                                 JSONObject jsonObject = new JSONObject();
+                                jsonObject.put("appkey",APP_KEY);
+                                jsonObject.put("customid","1");
 
-                                    jsonObject.put("appkey",APP_KEY);
-
-
-                                socketIO.emit("auth",jsonObject);
+                                socketIO.emit("connect",jsonObject);
                             }
-                            else if(event.equals("authack"))
+                            else if(event.equals("connack"))
                             {
                                 JSONObject jsonObject = (JSONObject)args[0];
                                 String sessionid = jsonObject.getString("sessionid");
                                 System.out.println(sessionid);
-                                socketIO.disconnect();
+                                JSONObject jsonAlias = new JSONObject();
+                                jsonAlias.put("alias","1");
+                                socketIO.emit("set_alias",jsonAlias);
+                            }
+                            else if(event.equals("set_alias_ack"))
+                            {
+                                JSONObject jsonObject = (JSONObject)args[0];
+                                boolean success = jsonObject.getBoolean("success");
+                                System.out.println("set alias "+(success?"success":"failed"));
+                            }
+                            else if(event.equals("message"))
+                            {
+                                JSONObject jsonObject = (JSONObject)args[0];
+                                String msg = jsonObject.getString("msg");
+                                System.out.println(msg);
                             }
                         } catch (JSONException e) {
                             e.printStackTrace();
@@ -77,7 +94,7 @@ public class Main {
                     @Override
                     public void run() {
                         try {
-                            Thread.sleep(5000);
+                            Thread.sleep(120000);
                             System.exit(0);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
